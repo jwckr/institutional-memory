@@ -1,33 +1,21 @@
 # Team Directory Update — May 2026
+*Reflects personnel changes effective April–May 2026.*
 
-*Reflects the org changes from the May 2026 re-org.*
+## Leadership changes
 
-## Engineering Leadership — changes
+- **Dr. Rajan Pillai** has left IDRI effective 2026-04-30 to join a private AI company. He is no longer the contact for Cockpit access or digital specimen requests.
+- **Priya Nair** has been promoted to **Digital Systems Lead**, taking over the Cockpit and CT archive from Rajan. She completed her onboarding in February and has been running the Cockpit since March under Rajan's supervision. She is the new contact for all digital access.
+- **Prof. Dr. Eleanor Marsh** continues as Director.
+- **Dr. Kofi Asamoah** continues as Head of Osteological Analysis.
 
-- **Anika Reddy** has moved into a new role as **Chief AI Officer**, effective 2026-04-01. She no longer manages Engineering day-to-day.
-- **Yuki Tanaka** is the new **Head of Engineering**, effective 2026-04-15.
-- **Tom Bryce** has been promoted to **Head of Platform**, replacing Yuki in that role.
-- **Carlos Mendes** continues as Head of SRE.
-- **Maya Singh** continues as Head of Security.
+## New hire
 
-## Engineering Ops Lead role
+- **Dr. Sven Larsen** — Joined May 2026 as Postdoctoral Researcher, Biomechanics. Based Copenhagen. Will be co-authoring the revised locomotion paper with Kofi. First point of contact for anything related to the new body mass study.
 
-The Engineering Ops Lead role (previously Tom's) is now held by **Priya Shah**, who moved over from leading the Web team.
+## Cockpit access — new process
 
-## Service ownership — changes
-
-| Service | Was | Is now |
-| --- | --- | --- |
-| payment-service | Tom Bryce | Maya Patel (new hire, joined 2026-03) |
-| frontend | Priya Shah | Daniel Okonkwo |
-
-All other service ownerships unchanged.
-
-## SRE Team — changes
-
-- **Diego Sanchez** returned from parental leave in May 2026.
-- **Anil Krishnan** joined as a new SRE in April 2026.
+With Rajan's departure, Cockpit access requests now go to **Priya Nair** (p.nair@idri-mauritius.org). The process is otherwise unchanged.
 
 ## Important
 
-If you have notes from before May 2026 referencing Anika as Head of Engineering or Tom as Eng Ops Lead, those notes are out of date.
+Any notes or memory entries referencing **Rajan Pillai** as the Cockpit contact are out of date. Direct all digital access queries to Priya Nair.
