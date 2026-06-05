@@ -14,6 +14,7 @@ Usage:
 
 import os
 from pathlib import Path
+from typing import Callable, Iterator
 
 from anthropic import Anthropic
 
@@ -24,36 +25,41 @@ TEST_QUESTION = (
     "I need to talk to."
 )
 
-DOCS_DIR = Path("synthetic-data/round1")
-OUTPUT_DIR = Path("outputs")
+DOCS_DIR = Path(__file__).parent / "synthetic-data/round1"
+OUTPUT_DIR = Path(__file__).parent / "outputs"
 
 
 def load_docs_as_context(docs_dir: Path) -> str:
     blocks = []
     for path in sorted(docs_dir.glob("*.md")):
-        print(f"  including {path.name}")
         blocks.append(f"=====  DOCUMENT: {path.name}  =====\n{path.read_text()}")
     return "\n\n".join(blocks)
 
 
-def main() -> None:
+def stream_session(
+    question: str = TEST_QUESTION,
+    on_event: Callable[[dict], None] | None = None,
+) -> Iterator[dict]:
+    """Yields events as dicts: {"type": "text"|"tool"|"done", ...}.
+
+    `on_event` is also called for each event so callers that prefer a callback
+    don't have to consume the iterator.
+    """
     if not os.environ.get("ANTHROPIC_API_KEY"):
-        raise SystemExit("Set ANTHROPIC_API_KEY before running.")
+        raise RuntimeError("ANTHROPIC_API_KEY not set")
 
+    base = Path(__file__).parent
     for required in (".agent_id", ".environment_id", ".memory_store_id"):
-        if not Path(required).exists():
-            raise SystemExit(f"Missing {required}. Run create_agent.py first.")
+        if not (base / required).exists():
+            raise RuntimeError(f"Missing {required}. Run create_agent.py first.")
 
-    agent_id = Path(".agent_id").read_text().strip()
-    environment_id = Path(".environment_id").read_text().strip()
-    memory_store_id = Path(".memory_store_id").read_text().strip()
+    agent_id = (base / ".agent_id").read_text().strip()
+    environment_id = (base / ".environment_id").read_text().strip()
+    memory_store_id = (base / ".memory_store_id").read_text().strip()
 
     client = Anthropic()
-
-    print(f"Loading round1 docs from {DOCS_DIR}/...")
     context = load_docs_as_context(DOCS_DIR)
 
-    print(f"\nStarting session with memory store {memory_store_id} attached...")
     session = client.beta.sessions.create(
         agent=agent_id,
         environment_id=environment_id,
@@ -81,11 +87,10 @@ def main() -> None:
         "4. Before you finish, save anything worth remembering to /mnt/memory/.\n\n"
         f"{context}\n\n"
         "==================================================\n"
-        f"QUESTION: {TEST_QUESTION}"
+        f"QUESTION: {question}"
     )
 
     final_text_parts: list[str] = []
-    print("\nAgent working...\n")
     with client.beta.sessions.events.stream(session.id) as stream:
         client.beta.sessions.events.send(
             session.id,
@@ -101,29 +106,63 @@ def main() -> None:
                 for block in event.content:
                     if getattr(block, "type", None) == "text":
                         final_text_parts.append(block.text)
-                        print(block.text, end="", flush=True)
+                        out = {"type": "text", "text": block.text}
+                        if on_event:
+                            on_event(out)
+                        yield out
             elif event.type == "agent.tool_use":
-                # Show file ops on /mnt/memory/ in particular — that's the demo
                 name = getattr(event, "name", "?")
                 inp = getattr(event, "input", {}) or {}
-                target = inp.get("path") or inp.get("file_path") or inp.get("command") or ""
-                if "/mnt/memory" in str(target):
-                    print(f"\n  [memory: {name}  {target}]", flush=True)
-                else:
-                    print(f"\n  [{name}]", flush=True)
+                target = (
+                    inp.get("path")
+                    or inp.get("file_path")
+                    or inp.get("command")
+                    or ""
+                )
+                is_memory = "/mnt/memory" in str(target)
+                out = {
+                    "type": "tool",
+                    "name": name,
+                    "target": str(target),
+                    "is_memory": is_memory,
+                }
+                if on_event:
+                    on_event(out)
+                yield out
             elif event.type == "session.status_idle":
-                print("\n\n[agent finished]")
+                final_text = "".join(final_text_parts)
+                OUTPUT_DIR.mkdir(exist_ok=True)
+                (OUTPUT_DIR / "session1.txt").write_text(
+                    f"=== SESSION 1 ===\nQuestion: {question}\n\n"
+                    f"--- ANSWER ---\n{final_text}\n"
+                )
+                out = {"type": "done", "answer": final_text}
+                if on_event:
+                    on_event(out)
+                yield out
                 break
 
-    final_text = "".join(final_text_parts)
-    OUTPUT_DIR.mkdir(exist_ok=True)
-    out = OUTPUT_DIR / "session1.txt"
-    out.write_text(
-        f"=== SESSION 1 ===\nQuestion: {TEST_QUESTION}\n\n--- ANSWER ---\n{final_text}\n"
-    )
-    print(f"\nSaved to {out}")
-    print(f"\nInspect what the agent remembered:  python inspect_memory.py")
-    print(f"Then run run_session_2.py.")
+
+def main() -> None:
+    print(f"Loading round1 docs from {DOCS_DIR}/...")
+    for path in sorted(DOCS_DIR.glob("*.md")):
+        print(f"  including {path.name}")
+    print("\nAgent working...\n")
+    for ev in stream_session():
+        if ev["type"] == "text":
+            print(ev["text"], end="", flush=True)
+        elif ev["type"] == "tool":
+            label = (
+                f"[memory: {ev['name']}  {ev['target']}]"
+                if ev["is_memory"]
+                else f"[{ev['name']}]"
+            )
+            print(f"\n  {label}", flush=True)
+        elif ev["type"] == "done":
+            print("\n\n[agent finished]")
+    print(f"\nSaved to {OUTPUT_DIR / 'session1.txt'}")
+    print("\nInspect what the agent remembered:  python inspect_memory.py")
+    print("Then run run_session_2.py.")
 
 
 if __name__ == "__main__":
