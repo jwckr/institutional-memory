@@ -7,6 +7,22 @@
 <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
+
+<!-- flying birds overlay -->
+<div class="birds-stage" aria-hidden="true">
+  <div class="bird-container bird-container-one">
+    <div class="bird bird-one"></div>
+  </div>
+  <div class="bird-container bird-container-two">
+    <div class="bird bird-two"></div>
+  </div>
+  <div class="bird-container bird-container-three">
+    <div class="bird bird-three"></div>
+  </div>
+  <div class="bird-container bird-container-four">
+    <div class="bird bird-four"></div>
+  </div>
+</div>
 <header class="masthead">
   <div class="masthead-inner">
     <svg class="masthead-art" viewBox="0 0 480 80" aria-hidden="true">
@@ -191,5 +207,12 @@
 </footer>
 
 <script src="/static/app.js"></script>
+
+<!-- dodo mascot -->
+<div class="dodo-popup" id="dodoPopup">
+  <img src="/static/dodo.png" alt="Dodo mascot" class="dodo-img" />
+  <button class="dodo-close" onclick="document.getElementById('dodoPopup').style.display='none'" title="Shoo!">&times;</button>
+</div>
+
 </body>
 </html>
